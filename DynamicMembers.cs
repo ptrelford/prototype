@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Linq;
 
 public class DynamicMembers : DynamicObject
 {
@@ -46,29 +47,39 @@ public class DynamicMembers : DynamicObject
         InvokeMemberBinder binder, object[] args, out object result)
     {
         object member;
-        if (_members.TryGetValue(binder.Name, out member))
+        if (this._members.TryGetValue(binder.Name, out member))
         {
-            return InvokeDelegate(member, args, out result);
-        }
-        if (_prototype != null)
+            return InvokeDelegate(this, member, args, out result);
+        }        
+        if( _prototype !=null )
         {
-            return _prototype.TryInvokeMember(binder, args, out result);
+            if (_prototype._members.TryGetValue(binder.Name, out member))
+            {
+                return InvokeDelegate(this, member, args, out result);
+            }   
         }
         result = null;
         return false;
     }
-    private static bool InvokeDelegate(object member, object[] args, out object result)
+    private static bool InvokeDelegate(dynamic instance, object member, object[] args, out object result)
     {
         if (member is Delegate)
         {
             var del = member as Delegate;
-            result = del.DynamicInvoke(args);
-            return true;
-        }
-        else
-        {
-            result = null;
-            return false;
-        }
+            var ps = del.Method.GetParameters();
+            if (ps.Length == args.Length)
+            {
+                result = del.DynamicInvoke(args);
+                return true;
+            }
+            if (ps.Length == args.Length + 1)
+            {    
+                var args2 = (new[] {instance}).Concat(args).ToArray();
+                result = del.DynamicInvoke(args2);
+                return true;
+            }
+        }      
+        result = null;
+        return false;
     }
 }
