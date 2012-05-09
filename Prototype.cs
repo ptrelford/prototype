@@ -15,7 +15,10 @@ public class Prototype : DynamicMembers
         return new Prototype<T1, T2>(cons);
     }
     readonly Action<dynamic> _cons;
-    protected Prototype(){ }
+    protected Prototype()
+    {
+        _prototype = new Instance();
+    }
     private Prototype(Action<dynamic> cons) 
         : this()
     {
@@ -23,12 +26,23 @@ public class Prototype : DynamicMembers
     }
     public dynamic New()
     {
-        var instance = new Instance();
+        var instance = CreateInstance();
         _cons(instance);
         return instance;
     }
+    readonly Instance _prototype;
+    internal Instance CreateInstance()
+    {
+        return new Instance(_prototype);
+    }
+    public dynamic prototype
+    {
+        get { return _prototype; }
+    }
     internal class Instance : DynamicMembers
     {
+        internal Instance() : base() { }
+        internal Instance(Instance parent) : base(parent) { }
     }
 }
 
@@ -41,7 +55,7 @@ public class Prototype<T> : Prototype
     }
     public dynamic New(T value)
     {
-        var instance = new Prototype.Instance();
+        var instance = CreateInstance();
         _cons(instance, value);
         return instance;
     }
@@ -56,7 +70,7 @@ public class Prototype<T1,T2> : Prototype
     }
     public dynamic New(T1 value1, T2 value2)
     {
-        var instance = new Prototype.Instance();
+        var instance = CreateInstance();
         _cons(instance, value1, value2);
         return instance;
     }

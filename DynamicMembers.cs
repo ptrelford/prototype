@@ -6,11 +6,35 @@ public class DynamicMembers : DynamicObject
 {
     readonly Dictionary<string, object> _members =
         new Dictionary<string, object>();
+    DynamicMembers _prototype;
+    public DynamicMembers(DynamicMembers prototype)
+    {
+        _prototype = prototype;
+    }
+    public DynamicMembers() : this(null) { }
+    public dynamic __proto__
+    {
+        get { return _prototype; }
+        set { _prototype = value; }
+    }
+    public object this[string name]
+    {
+        get { return _members[name]; }
+        set { _members[name] = value; }
+    }
+    public int Count
+    {
+        get { return _members.Count; }
+    }
     public override bool TryGetMember(
         GetMemberBinder binder, out object result)
     {
         string name = binder.Name;
-        return _members.TryGetValue(name, out result);
+        if( _members.TryGetValue(name, out result) )       
+            return true;
+        if (_prototype != null)
+            return _prototype.TryGetMember(binder, out result); 
+        return false;
     }
     public override bool TrySetMember(
         SetMemberBinder binder, object value)
@@ -18,28 +42,33 @@ public class DynamicMembers : DynamicObject
         _members[binder.Name] = value;
         return true;
     }
-    public int Count
-    {
-        get { return _members.Count; }
-    }
     public override bool TryInvokeMember(
         InvokeMemberBinder binder, object[] args, out object result)
     {
         object member;
         if (_members.TryGetValue(binder.Name, out member))
         {
-            if (member is Delegate)
-            {
-                var del = member as Delegate;
-                result = del.DynamicInvoke(args);
-                return true;
-            }
+            return InvokeDelegate(member, args, out result);
         }
-        throw new MissingMethodException();
+        if (_prototype != null)
+        {
+            return _prototype.TryInvokeMember(binder, args, out result);
+        }
+        result = null;
+        return false;
     }
-    public object this[string name]
+    private static bool InvokeDelegate(object member, object[] args, out object result)
     {
-        get { return _members[name]; }
-        set { _members[name] = value; }
+        if (member is Delegate)
+        {
+            var del = member as Delegate;
+            result = del.DynamicInvoke(args);
+            return true;
+        }
+        else
+        {
+            result = null;
+            return false;
+        }
     }
 }
