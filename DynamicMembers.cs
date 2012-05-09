@@ -8,6 +8,11 @@ public class DynamicMembers : DynamicObject
     readonly Dictionary<string, object> _members =
         new Dictionary<string, object>();
     DynamicMembers _prototype;
+    public dynamic Prototype
+    {
+        get { return _prototype; }
+        set { _prototype = value; }
+    }
     public DynamicMembers(DynamicMembers prototype)
     {
         _prototype = prototype;
@@ -33,8 +38,13 @@ public class DynamicMembers : DynamicObject
         string name = binder.Name;
         if( _members.TryGetValue(name, out result) )       
             return true;
-        if (_prototype != null)
-            return _prototype.TryGetMember(binder, out result); 
+        var prototype = _prototype;
+        while (_prototype != null)
+        {
+            if (_prototype.TryGetMember(binder, out result))
+                return true;
+            prototype = prototype.Prototype;
+        }
         return false;
     }
     public override bool TrySetMember(
@@ -50,13 +60,15 @@ public class DynamicMembers : DynamicObject
         if (this._members.TryGetValue(binder.Name, out member))
         {
             return InvokeDelegate(this, member, args, out result);
-        }        
-        if( _prototype !=null )
+        }
+        DynamicMembers prototype = Prototype;
+        while( prototype !=null )
         {
-            if (_prototype._members.TryGetValue(binder.Name, out member))
+            if (prototype._members.TryGetValue(binder.Name, out member))
             {
                 return InvokeDelegate(this, member, args, out result);
-            }   
+            }
+            prototype = prototype.Prototype;
         }
         result = null;
         return false;

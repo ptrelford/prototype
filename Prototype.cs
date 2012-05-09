@@ -2,22 +2,22 @@
 
 public class Prototype : DynamicMembers
 {
-    public static Prototype Define(Action<dynamic> cons)
+    public static Prototype Constructor(Action<dynamic> cons)
     {
         return new Prototype(cons);
     }
-    public static Prototype<T> Define<T>(Action<dynamic,T> cons)
+    public static Prototype<T> Constructor<T>(Action<dynamic,T> cons)
     {
         return new Prototype<T>(cons);
     }
-    public static Prototype<T1,T2> Define<T1, T2>(Action<dynamic, T1, T2> cons)
+    public static Prototype<T1,T2> Constructor<T1, T2>(Action<dynamic, T1, T2> cons)
     {
         return new Prototype<T1, T2>(cons);
     }
-    readonly Action<dynamic> _cons;
+    readonly Action<dynamic> _cons = _ => { };
     protected Prototype()
     {
-        _prototype = new Instance();
+        this.Prototype = new DynamicMembers();
     }
     private Prototype(Action<dynamic> cons) 
         : this()
@@ -30,19 +30,9 @@ public class Prototype : DynamicMembers
         _cons(instance);
         return instance;
     }
-    readonly Instance _prototype;
-    internal Instance CreateInstance()
+    internal DynamicMembers CreateInstance()
     {
-        return new Instance(_prototype);
-    }
-    public dynamic prototype
-    {
-        get { return _prototype; }
-    }
-    internal class Instance : DynamicMembers
-    {
-        internal Instance() : base() { }
-        internal Instance(Instance parent) : base(parent) { }
+        return new DynamicMembers(Prototype);
     }
 }
 
