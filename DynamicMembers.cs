@@ -25,7 +25,17 @@ public class DynamicMembers : DynamicObject
     public override bool TryInvokeMember(
         InvokeMemberBinder binder, object[] args, out object result)
     {
-        throw new NotImplementedException();
+        object member;
+        if (_members.TryGetValue(binder.Name, out member))
+        {
+            if (member is Delegate)
+            {
+                var del = member as Delegate;
+                result = del.DynamicInvoke(args);
+                return true;
+            }
+        }
+        throw new MissingMethodException();
     }
     public object this[string name]
     {

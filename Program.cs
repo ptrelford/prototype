@@ -12,7 +12,8 @@
             });
         dynamic sq = Square.New(5);
         System.Diagnostics.Debug.WriteLine((int ) sq.Width);
-        sq.Bang();
+        sq.Bang = (System.Action<int>)((x) => System.Diagnostics.Debug.WriteLine(x));
+        sq.Bang(9);
     }
 }
 
