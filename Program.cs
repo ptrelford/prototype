@@ -2,11 +2,17 @@
 {
     static void Main(string[] args)
     {
+        // Pseudo Classical
+
         var Mammal = Prototype.Constructor<string>((that,name_) => that.Name = name_);
         Mammal.Prototype.GetName = (System.Func<dynamic,string>) (that => that.Name);
+        Mammal.Prototype.Says = (System.Action<dynamic>)(that => {
+            string saying = that.Saying;
+            Echo(saying);
+        });
         var myMammal = Mammal.New("Herb the Mammal");
-        string name = myMammal.GetName();
-        System.Diagnostics.Debug.WriteLine(name);
+        string herb = myMammal.GetName();
+        Echo(herb);
 
         var Cat = Prototype.Constructor<string>((that, name_) => {
             that.Name = name_;
@@ -16,24 +22,44 @@
         Cat.Prototype = Mammal.New();
 
         var myCat = Cat.New("Henrietta");
-        string n = myCat.GetName();
-        System.Diagnostics.Debug.WriteLine(n);
 
+        string name = myCat.GetName();
+        Echo(name);
 
         dynamic Circle = Prototype.Constructor(that => {});
         Circle.X = 1;
-        System.Diagnostics.Debug.WriteLine((int ) Circle.X);
+        Echo((int ) Circle.X);
 
         var Square = Prototype.Constructor<int>(
             (that, width) => {
                 that.Width = width;
             });
         dynamic sq = Square.New(5);
-        System.Diagnostics.Debug.WriteLine((int ) sq.Width);
-        sq.Bang = (System.Action<int>)((x) => System.Diagnostics.Debug.WriteLine(x));
+        Echo((int ) sq.Width);
+        sq.Bang = (System.Action<int>)((x) => Echo(x));
         sq.Bang(9);
         Square.Prototype.Sides = 4;
-        System.Diagnostics.Debug.WriteLine((int)sq.Sides);      
+        Echo((int)sq.Sides);
+
+        // Prototypical
+
+        var Class = Prototype.FromObject( new { 
+            X = "Hello", 
+            Hey = (System.Func<dynamic, string>)(that => that.X)
+        });
+       dynamic cool = Class.New();
     }
+
+
+    private static void Echo(string text)
+    {
+        System.Diagnostics.Debug.WriteLine(text);
+    }
+
+    private static void Echo(int n)
+    {
+        System.Diagnostics.Debug.WriteLine(n);
+    }
+
 }
 

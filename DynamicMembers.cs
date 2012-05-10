@@ -34,17 +34,15 @@ public class DynamicMembers : DynamicObject
     }
     public override bool TryGetMember(
         GetMemberBinder binder, out object result)
-    {
-        string name = binder.Name;
-        if( _members.TryGetValue(name, out result) )       
-            return true;
-        var prototype = _prototype;
-        while (_prototype != null)
+    {     
+        var prototype = this;
+        while (prototype != null)
         {
-            if (_prototype.TryGetMember(binder, out result))
+            if (prototype._members.TryGetValue(binder.Name, out result))
                 return true;
             prototype = prototype.Prototype;
         }
+        result = null;
         return false;
     }
     public override bool TrySetMember(
@@ -57,11 +55,7 @@ public class DynamicMembers : DynamicObject
         InvokeMemberBinder binder, object[] args, out object result)
     {
         object member;
-        if (this._members.TryGetValue(binder.Name, out member))
-        {
-            return InvokeDelegate(this, member, args, out result);
-        }
-        DynamicMembers prototype = Prototype;
+        DynamicMembers prototype = this;
         while( prototype !=null )
         {
             if (prototype._members.TryGetValue(binder.Name, out member))
